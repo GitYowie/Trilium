@@ -119,15 +119,24 @@
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "@scarf/scarf",
+      "@swc/core",
       "better-sqlite3",
       "bufferutil",
+      "core-js",
       "core-js-pure",
+      "edgedriver",
       "electron",
       "electron-winstaller",
       "esbuild",
       "fs-xattr",
+      "geckodriver",
       "macos-alias",
+      "msw",
+      "protobufjs",
       "utf-8-validate"
     ]
+  },
+  "volta": {
+    "node": "22.11.0"
   }
 }
