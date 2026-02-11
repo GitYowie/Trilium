@@ -3,6 +3,9 @@ import froca from "./froca.js";
 import type FAttribute from "../entities/fattribute.js";
 import type FNote from "../entities/fnote.js";
 
+const LABEL_VALUE_LINK_MAP_NOTE_ID = "lmqEzk2qIomg";
+let labelValueLinkMapPromise: Promise<Record<string, Record<string, string>>> | null = null;
+
 async function renderAttribute(attribute: FAttribute, renderIsInheritable: boolean) {
     const isInheritable = renderIsInheritable && attribute.isInheritable ? `(inheritable)` : "";
     const $attr = $("<span>");
@@ -12,7 +15,12 @@ async function renderAttribute(attribute: FAttribute, renderIsInheritable: boole
 
         if (attribute.value) {
             $attr.append("=");
-            $attr.append(document.createTextNode(formatValue(attribute.value)));
+            const link = await createLabelValueLink(attribute.name, attribute.value);
+            if (link) {
+                $attr.append(link);
+            } else {
+                $attr.append(document.createTextNode(formatValue(attribute.value)));
+            }
         }
     } else if (attribute.type === "relation") {
         if (attribute.isAutoLink) {
@@ -33,6 +41,74 @@ async function renderAttribute(attribute: FAttribute, renderIsInheritable: boole
     }
 
     return $attr;
+}
+
+async function createLabelValueLink(attributeName: string, attributeValue: string) {
+    const mapping = (await getLabelValueLinkMap())[normalizeKey(attributeName)];
+    if (!mapping) return;
+
+    const url = mapping[normalizeKey(attributeValue)];
+    if (!url) return;
+
+    return $("<a>", {
+        href: ensureUrl(url),
+        class: "tn-link external",
+        target: "_blank",
+        rel: "noopener noreferrer"
+    }).text(formatValue(attributeValue));
+}
+
+async function getLabelValueLinkMap() {
+    if (!labelValueLinkMapPromise) {
+        labelValueLinkMapPromise = (async () => {
+            const blob = await froca.getBlob("notes", LABEL_VALUE_LINK_MAP_NOTE_ID);
+            const content = blob?.content?.trim();
+            if (!content) return {};
+
+            try {
+                const parsed = JSON.parse(content) as Record<string, Record<string, string>>;
+                return normalizeLabelValueMap(parsed);
+            } catch (error) {
+                ws.logError?.(`Failed to parse label-value link map note ${LABEL_VALUE_LINK_MAP_NOTE_ID}: ${String(error)}`);
+                return {};
+            }
+        })();
+    }
+
+    return await labelValueLinkMapPromise;
+}
+
+function normalizeLabelValueMap(input: Record<string, Record<string, string>>) {
+    const output: Record<string, Record<string, string>> = {};
+    for (const [ rawLabel, rawValues ] of Object.entries(input || {})) {
+        const labelKey = normalizeKey(rawLabel);
+        if (!labelKey || typeof rawValues !== "object" || rawValues === null) continue;
+
+        const normalizedValues: Record<string, string> = {};
+        for (const [ rawValue, rawUrl ] of Object.entries(rawValues)) {
+            if (typeof rawUrl !== "string") continue;
+            const valueKey = normalizeKey(rawValue);
+            if (!valueKey) continue;
+            normalizedValues[valueKey] = rawUrl;
+        }
+
+        if (Object.keys(normalizedValues).length > 0) {
+            output[labelKey] = normalizedValues;
+        }
+    }
+
+    return output;
+}
+
+function normalizeKey(value: string) {
+    return value.trim().toLowerCase();
+}
+
+function ensureUrl(url: string) {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(url)) {
+        return url;
+    }
+    return `https://${url}`;
 }
 
 function formatValue(val: string) {
