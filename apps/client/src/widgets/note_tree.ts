@@ -5,6 +5,11 @@ import contextMenu from "../menus/context_menu.js";
 import froca from "../services/froca.js";
 import branchService from "../services/branches.js";
 import ws from "../services/ws.js";
+import {
+    getTitleWithStatusConfigurable,
+    isTruthyLabelValue,
+    normalizeLabelValue
+} from "../services/note_title_display.js";
 import NoteContextAwareWidget from "./note_context_aware_widget.js";
 import server from "../services/server.js";
 import noteCreateService from "../services/note_create.js";
@@ -326,7 +331,16 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
         };
 
         this.$tree.on("mouseenter", "span.fancytree-title", (e) => {
-            e.currentTarget.title = isEnclosing(this.$tree, $(e.currentTarget)) ? "" : e.currentTarget.innerText;
+            if (isEnclosing(this.$tree, $(e.currentTarget))) {
+                e.currentTarget.title = "";
+                return;
+            }
+
+            const node = $.ui.fancytree.getNode(e as unknown as Event);
+            const noteId = node?.data?.noteId;
+            const note = noteId ? froca.getNoteFromCache(noteId) : null;
+            const tooltip = note?.getLabelValue("treeTooltip") || note?.title || e.currentTarget.innerText;
+            e.currentTarget.title = tooltip;
         });
     }
 
@@ -803,7 +817,9 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
             return;
         }
 
-        const title = `${branch.prefix ? `${branch.prefix} - ` : ""}${note.title}`;
+        const shortTitle = note.getLabelValue("treeShortTitle") || note.title;
+        const baseTitle = `${branch.prefix ? `${branch.prefix} - ` : ""}${shortTitle}`;
+        const title = this.getTreeTitleWithStatus(note, branch, baseTitle);
 
         node.data.isProtected = note.isProtected;
         node.data.noteType = note.type;
@@ -827,7 +843,9 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
             return null;
         }
 
-        const title = `${branch.prefix ? `${branch.prefix} - ` : ""}${note.title}`;
+        const shortTitle = note.getLabelValue("treeShortTitle") || note.title;
+        const baseTitle = `${branch.prefix ? `${branch.prefix} - ` : ""}${shortTitle}`;
+        const title = this.getTreeTitleWithStatus(note, branch, baseTitle);
 
         const isFolder = note.isFolder();
 
@@ -852,6 +870,55 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
         }
 
         return node;
+    }
+
+    private getTreeTitleWithStatus(note: FNote, branch: FBranch, baseTitle: string): string {
+        const enabledLabel = this.getNearestOwnedLabelAlongBranch(note, branch, "statusInTitle");
+        const enabled = enabledLabel.exists
+            ? isTruthyLabelValue(enabledLabel.value, true)
+            : isTruthyLabelValue(note.getLabelValue("statusInTitle"), note.hasLabel("statusInTitle"));
+
+        const statusTitleLabel = this.getNearestOwnedLabelAlongBranch(note, branch, "statusTitleLabel");
+        const labelFromNearest = statusTitleLabel.exists ? statusTitleLabel.value : null;
+        const labelFromInherited = note.getLabelValue("statusTitleLabel");
+        const rawLabelName = labelFromNearest ?? labelFromInherited;
+        const labelName = rawLabelName
+            ? normalizeLabelValue(rawLabelName).replace(/^#/, "")
+            : undefined;
+
+        return getTitleWithStatusConfigurable(note, baseTitle, {
+            enabled,
+            labelName: labelName && labelName.length > 0 ? labelName : undefined
+        });
+    }
+
+    private getNearestOwnedLabelAlongBranch(note: FNote, branch: FBranch, labelName: string): { exists: boolean; value: string | null } {
+        const ownValue = note.getOwnedLabelValue(labelName);
+        if (ownValue !== null) {
+            return { exists: true, value: ownValue };
+        }
+
+        let parentNoteId: string | null = branch.parentNoteId;
+        const visited = new Set<string>();
+
+        while (parentNoteId && parentNoteId !== "root" && !visited.has(parentNoteId)) {
+            visited.add(parentNoteId);
+
+            const parentNote = froca.getNoteFromCache(parentNoteId);
+            if (!parentNote) {
+                break;
+            }
+
+            const value = parentNote.getOwnedLabelValue(labelName);
+            if (value !== null) {
+                return { exists: true, value };
+            }
+
+            const nextParent = parentNote.getParentNotes().find(note => note.type !== "search");
+            parentNoteId = nextParent ? nextParent.noteId : null;
+        }
+
+        return { exists: false, value: null };
     }
 
     getExtraClasses(note: FNote) {

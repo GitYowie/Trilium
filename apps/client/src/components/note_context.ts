@@ -11,6 +11,7 @@ import protectedSessionHolder from "../services/protected_session_holder.js";
 import server from "../services/server.js";
 import treeService from "../services/tree.js";
 import utils from "../services/utils.js";
+import { getTitleWithStatus } from "../services/note_title_display.js";
 import { ReactWrappedWidget } from "../widgets/basic_widget.js";
 import appContext, { type EventData, type EventListener } from "./app_context.js";
 import Component from "./component.js";
@@ -430,7 +431,8 @@ class NoteContext extends Component implements EventListener<"entitiesReloaded">
         const { note, viewScope } = this;
 
         const isNormalView = (viewScope?.viewMode === "default" || viewScope?.viewMode === "contextual-help");
-        let title = (isNormalView ? note.title : `${note.title}: ${viewScope?.viewMode}`);
+        const baseTitle = getTitleWithStatus(note, note.title);
+        let title = (isNormalView ? baseTitle : `${baseTitle}: ${viewScope?.viewMode}`);
 
         if (viewScope?.attachmentId) {
             // assuming the attachment has been already loaded
