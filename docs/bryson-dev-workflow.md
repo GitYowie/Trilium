@@ -11,7 +11,8 @@ These customisations are implemented in core client code (not frontend startup s
 - `apps/client/src/services/note_title_display.ts`
   - Shared status-title logic.
   - Supports `statusInTitle` toggle label.
-  - Supports `statusTitleLabel` to choose which label value is appended.
+  - Supports `statusTitleLabel` to choose which label value(s) are appended.
+  - `statusTitleLabel` accepts multiple labels via repeated labels or delimited value (`comma`, `;`, `|`, newline).
 - `apps/client/src/components/note_context.ts`
   - Applies status-appended title logic to note context title display.
 

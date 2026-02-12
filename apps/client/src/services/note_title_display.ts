@@ -10,6 +10,7 @@ const FALSE_VALUES = new Set([ "0", "false", "no", "n", "off", "disabled", "disa
 export interface StatusTitleConfig {
     enabled?: boolean;
     labelName?: string;
+    labelNames?: string[];
 }
 
 function parseBooleanLabelValue(value: string | null | undefined, hasLabel: boolean): boolean {
@@ -108,8 +109,19 @@ export function getTitleWithStatusConfigurable(note: FNote, baseTitle: string, c
         return baseTitle;
     }
 
-    const status = config?.labelName
-        ? note.getLabelValue(config.labelName)
+    const configuredLabelNames = (config?.labelNames && config.labelNames.length > 0)
+        ? config.labelNames
+        : (config?.labelName ? [ config.labelName ] : []);
+
+    const statuses = configuredLabelNames.length > 0
+        ? configuredLabelNames
+            .map(labelName => note.getLabelValue(labelName))
+            .map(status => (status ? normalizeRawValue(status) : ""))
+            .filter(status => status.length > 0)
+        : [];
+
+    const status = statuses.length > 0
+        ? statuses.join(" ")
         : getStatusValue(note);
 
     if (!status) {

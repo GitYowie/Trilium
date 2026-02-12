@@ -878,17 +878,19 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
             ? isTruthyLabelValue(enabledLabel.value, true)
             : isTruthyLabelValue(note.getLabelValue("statusInTitle"), note.hasLabel("statusInTitle"));
 
-        const statusTitleLabel = this.getNearestOwnedLabelAlongBranch(note, branch, "statusTitleLabel");
-        const labelFromNearest = statusTitleLabel.exists ? statusTitleLabel.value : null;
-        const labelFromInherited = note.getLabelValue("statusTitleLabel");
-        const rawLabelName = labelFromNearest ?? labelFromInherited;
-        const labelName = rawLabelName
-            ? normalizeLabelValue(rawLabelName).replace(/^#/, "")
-            : undefined;
+        const statusTitleLabels = this.getNearestOwnedLabelsAlongBranch(note, branch, "statusTitleLabel");
+        const rawStatusTitleLabels = statusTitleLabels.length > 0
+            ? statusTitleLabels
+            : note.getLabels("statusTitleLabel").map(label => label.value ?? "");
+        const labelNames = rawStatusTitleLabels
+            .flatMap(rawValue => rawValue.split(/[,\n;|]/g))
+            .map(part => normalizeLabelValue(part).replace(/^#/, ""))
+            .filter(labelName => labelName.length > 0)
+            .filter((labelName, index, arr) => arr.indexOf(labelName) === index);
 
         return getTitleWithStatusConfigurable(note, baseTitle, {
             enabled,
-            labelName: labelName && labelName.length > 0 ? labelName : undefined
+            labelNames
         });
     }
 
@@ -919,6 +921,35 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
         }
 
         return { exists: false, value: null };
+    }
+
+    private getNearestOwnedLabelsAlongBranch(note: FNote, branch: FBranch, labelName: string): string[] {
+        const ownLabels = note.getOwnedLabels(labelName).map(label => label.value ?? "");
+        if (ownLabels.length > 0) {
+            return ownLabels;
+        }
+
+        let parentNoteId: string | null = branch.parentNoteId;
+        const visited = new Set<string>();
+
+        while (parentNoteId && parentNoteId !== "root" && !visited.has(parentNoteId)) {
+            visited.add(parentNoteId);
+
+            const parentNote = froca.getNoteFromCache(parentNoteId);
+            if (!parentNote) {
+                break;
+            }
+
+            const labels = parentNote.getOwnedLabels(labelName).map(label => label.value ?? "");
+            if (labels.length > 0) {
+                return labels;
+            }
+
+            const nextParent = parentNote.getParentNotes().find(note => note.type !== "search");
+            parentNoteId = nextParent ? nextParent.noteId : null;
+        }
+
+        return [];
     }
 
     getExtraClasses(note: FNote) {
