@@ -16,6 +16,7 @@ const UNSORTED_LOCALES = [
     { id: "cn", name: "简体中文", electronLocale: "zh_CN" },
     { id: "de", name: "Deutsch", electronLocale: "de" },
     { id: "en", name: "English (United States)", electronLocale: "en" },
+    { id: "en-AU", name: "English (Australia)", contentOnly: true },
     { id: "en-GB", name: "English (United Kingdom)", electronLocale: "en_GB" },
     { id: "es", name: "Español", electronLocale: "es" },
     { id: "fr", name: "Français", electronLocale: "fr" },
