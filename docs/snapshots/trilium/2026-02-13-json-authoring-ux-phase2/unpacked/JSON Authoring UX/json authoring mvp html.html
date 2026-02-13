@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<div style="display:flex; flex-direction:column; gap:8px; max-width: 1200px;">
+    <div style="font-family: monospace;">
+        JSON Authoring MVP — config: <code>xAEs1WrfPCIp</code> — target: <code>4jDHmkMm5INE</code>
+    </div>
+    <div id="jsonAuthoringMvp">Loading JSON authoring UI...</div>
+</div>
+
+<script>
+    (function() {
+        const mount = document.getElementById('jsonAuthoringMvp');
+
+        function fail(err) {
+            if (mount) {
+                mount.textContent = `Bootstrap failed: ${String(err && err.message ? err.message : err)}`;
+                mount.style.color = '#b63a2b';
+                mount.style.fontFamily = 'monospace';
+            }
+            console.error('JSON authoring MVP bootstrap failed:', err);
+        }
+
+        try {
+            const script = document.createElement('script');
+            script.src = `/api/notes/download/VNkUo2Se8J6e?_ts=${Date.now()}`;
+            script.async = false;
+
+            script.onload = function() {
+                try {
+                    if (typeof window.initJsonAuthoringMvp !== 'function') {
+                        throw new Error('initJsonAuthoringMvp function is not available.');
+                    }
+
+                    window.initJsonAuthoringMvp({
+                        configNoteId: 'xAEs1WrfPCIp',
+                        mountId: 'jsonAuthoringMvp'
+                    }).catch(fail);
+                } catch (err) {
+                    fail(err);
+                }
+            };
+
+            script.onerror = function() {
+                fail(new Error('Failed to load JS note script.'));
+            };
+
+            document.head.appendChild(script);
+        } catch (err) {
+            fail(err);
+        }
+    })();
+</script>

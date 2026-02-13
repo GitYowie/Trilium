@@ -1,0 +1,158 @@
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../style.css">
+    <base target="_parent">
+    <title data-trilium-title>JSON Authoring UI (MVP)</title>
+  </head>
+  
+  <body>
+    <div class="content">
+       <h1 data-trilium-h1>JSON Authoring UI (MVP)</h1>
+
+      <div class="ck-content">
+        <h2>Goal</h2>
+        <p>Deliver the first usable table-style editor for canonical JSON array datasets.</p>
+        <h2>Target Note</h2>
+        <p>Initial test target: <a href="#root/4jDHmkMm5INE">dropdown options</a>.</p>
+        <h2>UI Requirements (MVP)</h2>
+        <ul>
+          <li data-list-item-id="e8621e63d0e55dd7095606653ad047f8f">Load JSON array rows into editable table.</li>
+          <li data-list-item-id="e78cec796eeb538829cbe504c1cf65adc">Editable columns: <code spellcheck="false">domain</code>, <code spellcheck="false">id</code>,
+            <code
+            spellcheck="false">label</code>, <code spellcheck="false">parentId</code>, <code spellcheck="false">sort</code>,
+              <code
+              spellcheck="false">disabled</code>, <code spellcheck="false">meta.tagValue</code>.</li>
+          <li
+          data-list-item-id="e0d70fd8a06e708278ca2766d771823c4">Row add/delete.</li>
+            <li data-list-item-id="e36016eabfa93a4889ac5427fb7c8665b">Column sort.</li>
+            <li data-list-item-id="ea1702f81b597798b21a7fe4ce15e02f0">Validation errors shown before save.</li>
+        </ul>
+        <h2>Save Rules</h2>
+        <ul>
+          <li data-list-item-id="ee58b9d19193d78f56c685c7a3ef96d9c">Only save when all rows pass validation.</li>
+          <li data-list-item-id="e29de3b870b04f9346c4e84692d0a0be7">Write canonical JSON back to target note body.</li>
+          <li data-list-item-id="e1cc1934d2a255a22ce1643c413b116c7">Show success/failure message with reason.</li>
+        </ul>
+        <h2>Validation Rules (MVP)</h2>
+        <ul>
+          <li data-list-item-id="e0681564d38be6b6365b93414f26c138d"><code spellcheck="false">domain</code>, <code spellcheck="false">id</code>,
+            <code
+            spellcheck="false">label</code>required non-empty strings.</li>
+          <li data-list-item-id="e823ee5f6d8e380d1eaa39359bce9ee25"><code spellcheck="false">parentId</code> must be null or non-empty string.</li>
+          <li
+          data-list-item-id="ecf7efa6ed68c3ec2f024166b36289113"><code spellcheck="false">sort</code> must be number.</li>
+            <li data-list-item-id="efc862c6f12c8cdbea63cde7abe11f282"><code spellcheck="false">disabled</code> must be boolean.</li>
+        </ul>
+        <h2>Definition of Done</h2>
+        <p>Edit → validate → save → reload shows persisted valid JSON.</p>
+        <h2>MVP Artifacts (Implemented)</h2>
+        <ul>
+          <li data-list-item-id="e95a8d8c91cb4967fd9b8ed11729380fc"><a href="json%20authoring%20mvp%20html.html">json authoring mvp html</a> — render-note
+            shell.</li>
+          <li data-list-item-id="efe609e3f0bc069de339d6ac926670c42"><a href="json%20authoring%20mvp%20js.js">json authoring mvp js</a> — frontend runtime
+            (load/edit/validate/save).</li>
+          <li data-list-item-id="ec11f9aa5796d187ab8ac4c37dfc2b152"><a href="MVP%20Dataset%20Config.json">MVP Dataset Config</a> — dataset + column
+            + validation config.</li>
+        </ul>
+        <h2>How to Run</h2>
+        <ol>
+          <li data-list-item-id="e464d965c218d8fe18d345a935a3ab2df">Open <a href="JSON%20Authoring%20MVP%20Demo%20(Rende.dat">JSON Authoring MVP Demo (Render)</a> (host
+            note with <code spellcheck="false">~renderNote</code>).</li>
+          <li data-list-item-id="e1d4aae74f01d689885b98f6e939b8f6f">Edit rows in the table.</li>
+          <li data-list-item-id="e198f0c2c4b213421437c180ef9969630">Use <strong>Validate + Save</strong> to write JSON back to target note.</li>
+          <li
+          data-list-item-id="ed38fd8348da06ed52b8b68f6b536fee2">Use <strong>Reload target</strong> to discard in-memory edits and reload
+            from note.</li>
+        </ol>
+        <h2>Known Limits (MVP)</h2>
+        <ul>
+          <li data-list-item-id="e120727303f474ab7747e62b01c572d6c">No paging/virtualization (best for modest row counts).</li>
+          <li data-list-item-id="e9a817867212819037a62bcff726bb7d2">Validation is config-driven but intentionally minimal.</li>
+          <li data-list-item-id="ee48f6cf430aee76cd99ae77b71042434">Focused on array-of-objects JSON only.</li>
+        </ul>
+        <h2>Hardening Implemented</h2>
+        <ul>
+          <li data-list-item-id="efd8ee77f87f1f283a423310e72e05306">Inline per-cell validation markers (red border + tooltip with error).</li>
+          <li
+          data-list-item-id="e34f715fdf691e51808dea64492a9c9a9">Unsaved-changes guard for navigation clicks and browser unload.</li>
+            <li
+            data-list-item-id="ec17f2607a1a505e181f29efd71fd43d0">Global and per-column filtering controls.</li>
+              <li data-list-item-id="eccaeaa6838390e4a11732860a6e710f9">Host-note config overrides via labels.</li>
+        </ul>
+        <h2>Host Labels (Reusable Runtime)</h2>
+        <ul>
+          <li data-list-item-id="eb889a4698dc0685d88d175c5b0e158d4"><code spellcheck="false">#jsonAuthoringConfigNoteId=&lt;noteId&gt;</code> —
+            config note to load.</li>
+          <li data-list-item-id="ef1cc0d8697daf511334ea030df0397a9"><code spellcheck="false">#jsonAuthoringTargetNoteId=&lt;noteId&gt;</code> —
+            optional target override.</li>
+        </ul>
+        <p>Default host for this MVP: <a href="JSON%20Authoring%20MVP%20Demo%20(Rende.dat">JSON Authoring MVP Demo (Render)</a>.</p>
+        <h2>Pre-Save Revision Option</h2>
+        <ul>
+          <li data-list-item-id="e56c43c613feb3953ba447a8297d7a21e"><code spellcheck="false">#jsonAuthoringCreateRevisionOnSave=true|false</code> on
+            host note controls default.</li>
+          <li data-list-item-id="e2bb39a9bf8b7d8d02882a5d9d69f11eb">UI toggle: <strong>Create revision before save</strong> can be switched
+            at runtime.</li>
+          <li data-list-item-id="e771d647cbf391e838ed2d1c95601975b">If backend revision method is unavailable, save still proceeds and the
+            status message indicates that revision could not be created.</li>
+        </ul>
+        <h2>Additional Hardening</h2>
+        <ul>
+          <li data-list-item-id="e7364426c58a499f3af023b316a8ec1c1">Row action <strong>Auto-fix</strong> to coerce invalid types, fill required
+            blanks, and attempt unique-key de-duplication.</li>
+          <li data-list-item-id="e7c54a723b3ad2a13a085e0fd4c620dfb"><strong>Export JSON</strong> now uses a Save dialog when supported; otherwise
+            it falls back to browser download.</li>
+          <li data-list-item-id="ed730a4d4b69b5db8ae6135378acdb7ee"><strong>Save as child note</strong> creates a JSON snapshot note under
+            the current host note, with an in-page title field (no <code spellcheck="false">prompt()</code> dependency).</li>
+          <li
+          data-list-item-id="ecffd33ad53705dadb4b0a2aeab1a1108"><strong>Import JSON</strong> button replaces in-memory rows from a selected
+            JSON file.</li>
+            <li data-list-item-id="eb350f7f429cc97ffe3837bd2489622d9">Revision-on-save default resolves to <strong>true</strong> when host label
+              is not set.</li>
+            <li data-list-item-id="e3340c0a1e8869c93a64f88e0d0cf11a0">Dirty-guard listeners now self-clean on unmount and clear local dirty
+              state when discard-and-leave is confirmed.</li>
+        </ul>
+        <h2>Nesting Rules (Phase 1)</h2>
+        <ul>
+          <li data-list-item-id="ef69df24e97455dd373f1d3148ab75e2e">Default policy is <strong>forbid nested arrays/objects</strong> for editable
+            row fields.</li>
+          <li data-list-item-id="e9fab9d396f1c3f13010e74da5351f210">Exception: explicitly allowed object paths in config (currently <code spellcheck="false">meta</code>).</li>
+          <li
+          data-list-item-id="ee3fa470ccc0d5eb77f2ba57218ead5ff">Arrays are forbidden unless explicitly whitelisted via config.</li>
+            <li
+            data-list-item-id="edea8019a135037f7a07c0a922801f8f0">Validation now reports nested violations with row + path, for example
+              <code
+              spellcheck="false">Row 3: nested array not allowed at 'meta.items'</code>.</li>
+        </ul>
+        <p>Config location: <a href="MVP%20Dataset%20Config.json">MVP Dataset Config</a> under
+          <code
+          spellcheck="false">validation.nesting</code>.</p>
+        <h2>Nesting Rules (Phase 2)</h2>
+        <ul>
+          <li>Selective nested-path support is now enabled by config.</li>
+          <li>Current allow-list includes <code>meta.items</code> as an allowed nested
+            array path.</li>
+          <li>All other nested arrays/objects remain blocked unless explicitly added
+            to allow lists.</li>
+        </ul>
+        <h2>Nested Visibility (Current)</h2>
+        <ul>
+          <li><code>meta.items</code> is now exposed as a table column (<code>json-array</code> type).</li>
+          <li>Cell editor for <code>json-array</code> is a JSON textarea; value is parsed
+            on blur/change and then validated.</li>
+          <li>This is an MVP representation: JSON text editing in-cell, not yet a dedicated
+            sub-grid UI.</li>
+        </ul>
+        <p>For <code>json-array</code> columns, the cell now provides an <strong>Edit subgrid</strong> action
+          that opens a nested rows/columns editor and writes the result back into
+          that cell.</p>
+        <p>Subgrid columns/required fields can now be defined in config under <code>subgrids.&lt;path&gt;.columns</code> (for
+          example <code>subgrids.meta.items.columns</code>).</p>
+      </div>
+    </div>
+  </body>
+
+</html>
