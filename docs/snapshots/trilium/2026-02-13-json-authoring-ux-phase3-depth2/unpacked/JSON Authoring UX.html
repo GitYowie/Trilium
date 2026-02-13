@@ -1,0 +1,97 @@
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <base target="_parent">
+    <title data-trilium-title>JSON Authoring UX</title>
+  </head>
+  
+  <body>
+    <div class="content">
+       <h1 data-trilium-h1>JSON Authoring UX</h1>
+
+      <div class="ck-content">
+        <h2>Purpose</h2>
+        <p>Provide a reliable, human-friendly way to edit JSON note content in Trilium
+          without manually editing raw JSON text.</p>
+        <h2>Problem Statement</h2>
+        <p>Raw JSON is machine-friendly but inefficient for manual editing, especially
+          for tabular records. We need a structured editor with validation and controlled
+          save semantics.</p>
+        <h2>Scope</h2>
+        <ul>
+          <li>Table/grid-style editing for JSON array-of-objects datasets.</li>
+          <li>Validation before save (shape, required fields, type checks).</li>
+          <li>Safe save path with clear error feedback.</li>
+          <li>Sort/filter/edit UX for data maintenance.</li>
+        </ul>
+        <h2>Out of Scope (Phase 1)</h2>
+        <ul>
+          <li>General JSON schema editor for arbitrary nested documents.</li>
+          <li>Auto-migration of all legacy JSON notes.</li>
+          <li>Full plugin ecosystem redesign.</li>
+        </ul>
+        <h2>Current Inputs</h2>
+        <ul>
+          <li><a href="#root/7JbjeeFmaVwu">JSON Editor Plugin</a> (prior approach and
+            lessons).</li>
+          <li><a href="#root/potuvPkEaQBR">json_test</a> (sample data corpus).</li>
+          <li><a href="#root/KXzvlPcgdunP">Style Presets (JSON)</a> (secondary JSON authoring
+            target).</li>
+        </ul>
+        <h2>Design Decisions (Working)</h2>
+        <ol>
+          <li>Primary target format is canonical array-of-objects datasets.</li>
+          <li>Editor must keep JSON as source of truth in the note body.</li>
+          <li>Save operation must block on validation failure.</li>
+          <li>Error messages must point to row/field where possible.</li>
+        </ol>
+        <h2>Implementation Path</h2>
+        <h3>Phase 1 — MVP (single dataset class)</h3>
+        <ul>
+          <li>Create a dedicated JSON authoring UI note (render/widget shell) for array-of-objects.</li>
+          <li>Load target JSON note content into table model.</li>
+          <li>Support basic row add/delete/edit and column sorting.</li>
+          <li>Validate required columns and primitive types.</li>
+          <li>Save back to target JSON note only when valid.</li>
+        </ul>
+        <h3>Phase 2 — Hardening</h3>
+        <ul>
+          <li>Add filter controls and optional column-level constraints.</li>
+          <li>Add explicit dirty-state + unsaved changes warnings.</li>
+          <li>Add optional backup/revision checkpoint before write.</li>
+        </ul>
+        <h3>Phase 3 — Reuse</h3>
+        <ul>
+          <li>Parameterize editor so different JSON datasets can reuse the same UI engine.</li>
+          <li>Support per-dataset config note (column defs, required fields, defaults).</li>
+        </ul>
+        <h2>Acceptance Criteria (Phase 1)</h2>
+        <ul>
+          <li>User can edit canonical JSON rows in table form.</li>
+          <li>Invalid data cannot be saved.</li>
+          <li>Successful save updates target JSON note content.</li>
+          <li>Reloading the target note shows persisted valid JSON.</li>
+        </ul>
+        <h2>Current Status</h2>
+        <ul>
+          <li>MVP UI spec created: <a href="JSON%20Authoring%20UX/JSON%20Authoring%20UI%20(MVP).html">JSON Authoring UI (MVP)</a>.</li>
+          <li>MVP dataset config created: <a href="JSON%20Authoring%20UX/MVP%20Dataset%20Config.json">MVP Dataset Config</a>.</li>
+          <li>Runnable MVP renderer/script created: <a href="JSON%20Authoring%20UX/json%20authoring%20mvp%20html.html">json authoring mvp html</a> +
+            <a
+            href="JSON%20Authoring%20UX/json%20authoring%20mvp%20js.js">json authoring mvp js</a>.</li>
+        </ul>
+        <h2>Next Build Task</h2>
+        <p>Harden data integrity and reuse: add pre-save revision checkpoint option,
+          improve dirty-guard coverage for all navigation paths, and package host-label
+          conventions into a reusable SOP template.</p>
+        <h2>Target Outcome</h2>
+        <p>A maintainable authoring path where users edit structured JSON data with
+          low error rate and predictable save behavior.</p>
+      </div>
+    </div>
+  </body>
+
+</html>

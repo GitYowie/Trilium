@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "targetNoteId": "4jDHmkMm5INE",
+  "datasetType": "arrayOfObjects",
+  "columns": [
+    { "key": "domain", "type": "string", "required": true, "sortable": true },
+    { "key": "id", "type": "string", "required": true, "sortable": true },
+    { "key": "label", "type": "string", "required": true, "sortable": true },
+    { "key": "parentId", "type": "string|null", "required": false, "sortable": true },
+    { "key": "sort", "type": "number", "required": true, "sortable": true },
+    { "key": "disabled", "type": "boolean", "required": true, "sortable": true },
+    { "key": "meta.tagValue", "type": "string", "required": false, "sortable": true },
+    { "key": "meta.items", "type": "json-array", "required": false, "sortable": false }
+  ],
+  "subgrids": {
+    "meta.items": {
+      "columns": [
+        { "key": "name", "type": "string", "required": true },
+        { "key": "kind", "type": "string", "required": false },
+        { "key": "weight", "type": "number", "required": false },
+        { "key": "disabled", "type": "boolean", "required": false },
+        {
+          "key": "tags",
+          "type": "json-array",
+          "required": false,
+          "subgrid": {
+            "columns": [
+              { "key": "label", "type": "string", "required": true },
+              { "key": "score", "type": "number", "required": false }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "validation": {
+    "uniqueKeys": ["domain", "id"],
+    "nesting": {
+      "mode": "forbid",
+      "allowObjectPaths": ["meta"],
+      "allowArrayPaths": ["meta.items"]
+    }
+  }
+}

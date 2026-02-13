@@ -1,0 +1,443 @@
+{
+	"formatVersion": 2,
+	"appVersion": "0.101.3",
+	"files": [
+		{
+			"isClone": false,
+			"noteId": "vb6AyK3615q2",
+			"notePath": [
+				"vb6AyK3615q2"
+			],
+			"title": "JSON Authoring UX",
+			"notePosition": 220,
+			"prefix": null,
+			"isExpanded": false,
+			"type": "text",
+			"mime": "text/html",
+			"attributes": [
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "Qb2ghgVxPSAX",
+					"isInheritable": false,
+					"position": 50
+				},
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "xAEs1WrfPCIp",
+					"isInheritable": false,
+					"position": 60
+				},
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "NY903UTDSAGD",
+					"isInheritable": false,
+					"position": 70
+				},
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "VNkUo2Se8J6e",
+					"isInheritable": false,
+					"position": 80
+				},
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "VNkUo2Se8J6e",
+					"isInheritable": false,
+					"position": 70
+				},
+				{
+					"type": "relation",
+					"name": "internalLink",
+					"value": "NY903UTDSAGD",
+					"isInheritable": false,
+					"position": 80
+				}
+			],
+			"format": "html",
+			"dataFileName": "JSON Authoring UX.html",
+			"attachments": [],
+			"dirFileName": "JSON Authoring UX",
+			"children": [
+				{
+					"isClone": false,
+					"noteId": "Qb2ghgVxPSAX",
+					"notePath": [
+						"vb6AyK3615q2",
+						"Qb2ghgVxPSAX"
+					],
+					"title": "JSON Authoring UI (MVP)",
+					"notePosition": 10,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "text",
+					"mime": "text/html",
+					"attributes": [
+						{
+							"type": "relation",
+							"name": "internalLink",
+							"value": "NY903UTDSAGD",
+							"isInheritable": false,
+							"position": 30
+						},
+						{
+							"type": "relation",
+							"name": "internalLink",
+							"value": "VNkUo2Se8J6e",
+							"isInheritable": false,
+							"position": 40
+						},
+						{
+							"type": "relation",
+							"name": "internalLink",
+							"value": "xAEs1WrfPCIp",
+							"isInheritable": false,
+							"position": 50
+						},
+						{
+							"type": "relation",
+							"name": "internalLink",
+							"value": "MzYyeT3HIFlx",
+							"isInheritable": false,
+							"position": 70
+						},
+						{
+							"type": "relation",
+							"name": "internalLink",
+							"value": "MzYyeT3HIFlx",
+							"isInheritable": false,
+							"position": 70
+						}
+					],
+					"format": "html",
+					"dataFileName": "JSON Authoring UI (MVP).html",
+					"attachments": []
+				},
+				{
+					"isClone": false,
+					"noteId": "xAEs1WrfPCIp",
+					"notePath": [
+						"vb6AyK3615q2",
+						"xAEs1WrfPCIp"
+					],
+					"title": "MVP Dataset Config",
+					"notePosition": 20,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "code",
+					"mime": "application/json",
+					"attributes": [
+						{
+							"type": "label",
+							"name": "customisation_ui",
+							"value": "false",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_widget",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_status",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_devStatus",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "comments",
+							"value": "Dataset configuration for JSON authoring MVP.",
+							"isInheritable": false,
+							"position": 10
+						}
+					],
+					"dataFileName": "MVP Dataset Config.json",
+					"attachments": []
+				},
+				{
+					"isClone": false,
+					"noteId": "VNkUo2Se8J6e",
+					"notePath": [
+						"vb6AyK3615q2",
+						"VNkUo2Se8J6e"
+					],
+					"title": "json authoring mvp js",
+					"notePosition": 30,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "code",
+					"mime": "application/javascript;env=frontend",
+					"attributes": [
+						{
+							"type": "label",
+							"name": "run",
+							"value": "frontendStartup",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_widget",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_status",
+							"value": "☑️",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_devStatus",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_ui",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "comments",
+							"value": "MVP JSON table authoring runtime (load/edit/validate/save) for array-of-objects datasets.",
+							"isInheritable": false,
+							"position": 10
+						}
+					],
+					"dataFileName": "json authoring mvp js.js",
+					"attachments": []
+				},
+				{
+					"isClone": false,
+					"noteId": "NY903UTDSAGD",
+					"notePath": [
+						"vb6AyK3615q2",
+						"NY903UTDSAGD"
+					],
+					"title": "json authoring mvp html",
+					"notePosition": 40,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "code",
+					"mime": "text/html",
+					"attributes": [
+						{
+							"type": "label",
+							"name": "customisation_ui",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_status",
+							"value": "☑️",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_devStatus",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "comments",
+							"value": "MVP render-note shell for JSON table authoring UI.",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_widget",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						}
+					],
+					"dataFileName": "json authoring mvp html.html",
+					"attachments": []
+				},
+				{
+					"isClone": false,
+					"noteId": "Xioshh9UFMD9",
+					"notePath": [
+						"vb6AyK3615q2",
+						"Xioshh9UFMD9"
+					],
+					"title": "JSON Authoring MVP Demo",
+					"notePosition": 50,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "text",
+					"mime": "text/html",
+					"attributes": [
+						{
+							"type": "relation",
+							"name": "renderNote",
+							"value": "NY903UTDSAGD",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_ui",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_widget",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_status",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_devStatus",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "comments",
+							"value": "Host note that renders the JSON Authoring MVP UI.",
+							"isInheritable": false,
+							"position": 10
+						}
+					],
+					"format": "html",
+					"dataFileName": "JSON Authoring MVP Demo.html",
+					"attachments": []
+				},
+				{
+					"isClone": false,
+					"noteId": "MzYyeT3HIFlx",
+					"notePath": [
+						"vb6AyK3615q2",
+						"MzYyeT3HIFlx"
+					],
+					"title": "JSON Authoring MVP Demo (Render)",
+					"notePosition": 60,
+					"prefix": null,
+					"isExpanded": false,
+					"type": "render",
+					"mime": "",
+					"attributes": [
+						{
+							"type": "relation",
+							"name": "renderNote",
+							"value": "NY903UTDSAGD",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_ui",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_widget",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_status",
+							"value": "☑️",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "customisation_devStatus",
+							"value": "🧪",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "comments",
+							"value": "Render-type host note for JSON Authoring MVP UI.",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "jsonAuthoringConfigNoteId",
+							"value": "xAEs1WrfPCIp",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "jsonAuthoringTargetNoteId",
+							"value": "4jDHmkMm5INE",
+							"isInheritable": false,
+							"position": 10
+						},
+						{
+							"type": "label",
+							"name": "jsonAuthoringCreateRevisionOnSave",
+							"value": "true",
+							"isInheritable": false,
+							"position": 10
+						}
+					],
+					"dataFileName": "JSON Authoring MVP Demo (Rende.dat",
+					"attachments": []
+				}
+			]
+		},
+		{
+			"noImport": true,
+			"dataFileName": "navigation.html"
+		},
+		{
+			"noImport": true,
+			"dataFileName": "index.html"
+		},
+		{
+			"noImport": true,
+			"dataFileName": "style.css"
+		}
+	]
+}
