@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "targetNoteId": "4jDHmkMm5INE",
+  "datasetType": "arrayOfObjects",
+  "columns": [
+    { "key": "domain", "type": "string", "required": true, "sortable": true },
+    { "key": "id", "type": "string", "required": true, "sortable": true },
+    { "key": "label", "type": "string", "required": true, "sortable": true },
+    { "key": "parentId", "type": "string|null", "required": false, "sortable": true },
+    { "key": "sort", "type": "number", "required": true, "sortable": true },
+    { "key": "disabled", "type": "boolean", "required": true, "sortable": true },
+    { "key": "meta.tagValue", "type": "string", "required": false, "sortable": true }
+  ],
+  "validation": {
+    "uniqueKeys": ["domain", "id"]
+  }
+}

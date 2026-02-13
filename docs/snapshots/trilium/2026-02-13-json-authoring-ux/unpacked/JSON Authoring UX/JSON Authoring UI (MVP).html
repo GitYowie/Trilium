@@ -1,0 +1,111 @@
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../style.css">
+    <base target="_parent">
+    <title data-trilium-title>JSON Authoring UI (MVP)</title>
+  </head>
+  
+  <body>
+    <div class="content">
+       <h1 data-trilium-h1>JSON Authoring UI (MVP)</h1>
+
+      <div class="ck-content">
+        <h2>Goal</h2>
+        <p>Deliver the first usable table-style editor for canonical JSON array datasets.</p>
+        <h2>Target Note</h2>
+        <p>Initial test target: <a href="#root/4jDHmkMm5INE">dropdown options</a>.</p>
+        <h2>UI Requirements (MVP)</h2>
+        <ul>
+          <li>Load JSON array rows into editable table.</li>
+          <li>Editable columns: <code>domain</code>, <code>id</code>, <code>label</code>, <code>parentId</code>, <code>sort</code>, <code>disabled</code>, <code>meta.tagValue</code>.</li>
+          <li>Row add/delete.</li>
+          <li>Column sort.</li>
+          <li>Validation errors shown before save.</li>
+        </ul>
+        <h2>Save Rules</h2>
+        <ul>
+          <li>Only save when all rows pass validation.</li>
+          <li>Write canonical JSON back to target note body.</li>
+          <li>Show success/failure message with reason.</li>
+        </ul>
+        <h2>Validation Rules (MVP)</h2>
+        <ul>
+          <li><code>domain</code>, <code>id</code>, <code>label</code> required non-empty
+            strings.</li>
+          <li><code>parentId</code> must be null or non-empty string.</li>
+          <li><code>sort</code> must be number.</li>
+          <li><code>disabled</code> must be boolean.</li>
+        </ul>
+        <h2>Definition of Done</h2>
+        <p>Edit → validate → save → reload shows persisted valid JSON.</p>
+        <h2>MVP Artifacts (Implemented)</h2>
+        <ul>
+          <li><a href="json%20authoring%20mvp%20html.html">json authoring mvp html</a> — render-note
+            shell.</li>
+          <li><a href="json%20authoring%20mvp%20js.js">json authoring mvp js</a> — frontend runtime
+            (load/edit/validate/save).</li>
+          <li><a href="MVP%20Dataset%20Config.json">MVP Dataset Config</a> — dataset + column
+            + validation config.</li>
+        </ul>
+        <h2>How to Run</h2>
+        <ol>
+          <li>Open <a href="JSON%20Authoring%20MVP%20Demo%20(Rende.dat">JSON Authoring MVP Demo (Render)</a> (host
+            note with <code>~renderNote</code>).</li>
+          <li>Edit rows in the table.</li>
+          <li>Use <strong>Validate + Save</strong> to write JSON back to target note.</li>
+          <li>Use <strong>Reload target</strong> to discard in-memory edits and reload
+            from note.</li>
+        </ol>
+        <h2>Known Limits (MVP)</h2>
+        <ul>
+          <li>No paging/virtualization (best for modest row counts).</li>
+          <li>Validation is config-driven but intentionally minimal.</li>
+          <li>Focused on array-of-objects JSON only.</li>
+        </ul>
+        <h2>Hardening Implemented</h2>
+        <ul>
+          <li>Inline per-cell validation markers (red border + tooltip with error).</li>
+          <li>Unsaved-changes guard for navigation clicks and browser unload.</li>
+          <li>Global and per-column filtering controls.</li>
+          <li>Host-note config overrides via labels.</li>
+        </ul>
+        <h2>Host Labels (Reusable Runtime)</h2>
+        <ul>
+          <li><code>#jsonAuthoringConfigNoteId=&lt;noteId&gt;</code> — config note to
+            load.</li>
+          <li><code>#jsonAuthoringTargetNoteId=&lt;noteId&gt;</code> — optional target
+            override.</li>
+        </ul>
+        <p>Default host for this MVP: <a href="JSON%20Authoring%20MVP%20Demo%20(Rende.dat">JSON Authoring MVP Demo (Render)</a>.</p>
+        <h2>Pre-Save Revision Option</h2>
+        <ul>
+          <li><code>#jsonAuthoringCreateRevisionOnSave=true|false</code> on host note
+            controls default.</li>
+          <li>UI toggle: <strong>Create revision before save</strong> can be switched
+            at runtime.</li>
+          <li>If backend revision method is unavailable, save still proceeds and the
+            status message indicates that revision could not be created.</li>
+        </ul>
+        <h2>Additional Hardening</h2>
+        <ul>
+          <li>Row action <strong>Auto-fix</strong> to coerce invalid types, fill required
+            blanks, and attempt unique-key de-duplication.</li>
+          <li><strong>Export JSON</strong> now uses a Save dialog when supported; otherwise
+            it falls back to browser download.</li>
+          <li><strong>Save as child note</strong> creates a JSON snapshot note under
+            the current host note, with an in-page title field (no <code>prompt()</code> dependency).</li>
+          <li><strong>Import JSON</strong> button replaces in-memory rows from a selected
+            JSON file.</li>
+          <li>Revision-on-save default resolves to <strong>true</strong> when host label
+            is not set.</li>
+          <li>Dirty-guard listeners now self-clean on unmount and clear local dirty
+            state when discard-and-leave is confirmed.</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+
+</html>
