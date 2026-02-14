@@ -24,6 +24,56 @@ body.prefers-centered-content .note-list-widget:not(.full-height) {
     height: 100%;
 }
 
+.collection-header-controls,
+.collection-header-include {
+    border: 1px solid var(--main-border-color);
+    background: var(--accented-background-color);
+    border-radius: 6px;
+    margin: 10px;
+    padding: 10px;
+}
+
+.collection-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.collection-header-controls-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.collection-header-controls-meta {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.collection-header-controls-error {
+    color: var(--warning-text-color, #b54708);
+    width: 100%;
+    font-size: 12px;
+}
+
+.collection-header-controls-info {
+    color: var(--muted-text-color, #4d4d4d);
+    width: 100%;
+    font-size: 12px;
+}
+
+.collection-header-include-status {
+    margin-bottom: 6px;
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.collection-header-include-content {
+    overflow: auto;
+}
+
 /* #region Pagination */
 .note-list-pager span.current-page {
     text-decoration: underline;

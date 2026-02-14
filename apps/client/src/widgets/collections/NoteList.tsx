@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import FNote from "../../entities/fnote";
 import type { PrintReport } from "../../print";
 import froca from "../../services/froca";
+import * as attributes from "../../services/attributes.js";
+import server from "../../services/server.js";
 import { subscribeToMessages, unsubscribeToMessage as unsubscribeFromMessage } from "../../services/ws";
 import { useNoteContext, useNoteLabel, useNoteLabelBoolean, useNoteProperty, useTriliumEvent } from "../react/hooks";
 import { allViewTypes, ViewModeMedia, ViewModeProps, ViewTypeOptions } from "./interface";
@@ -76,6 +78,10 @@ export function CustomNoteList({ note, viewType, isEnabled: shouldEnable, notePa
     const [ isIntersecting, setIsIntersecting ] = useState(false);
     const shouldRender = (isFullHeight || isIntersecting || note?.type === "book");
     const isEnabled = (note && shouldEnable && !!viewType && shouldRender);
+    const [ headerEnabled, setHeaderEnabled ] = useNoteLabelBoolean(note, "collectionHeaderEnabled");
+    const [ headerNoteId ] = useNoteLabel(note, "collectionHeaderNoteId");
+    const isCollectionWithHeaderSupport = Boolean(note && viewType && [ "grid", "calendar", "table", "geoMap", "presentation" ].includes(viewType));
+    const showHeader = Boolean(isCollectionWithHeaderSupport && headerEnabled);
 
     useEffect(() => {
         if (isFullHeight || displayOnlyCollections || note?.type === "book") {
@@ -124,12 +130,192 @@ export function CustomNoteList({ note, viewType, isEnabled: shouldEnable, notePa
 
     return (
         <div ref={widgetRef} className={`note-list-widget component ${isFullHeight && isEnabled ? "full-height" : ""}`}>
+            {isCollectionWithHeaderSupport && note && (
+                <CollectionHeaderControls
+                    note={note}
+                    enabled={!!headerEnabled}
+                    setEnabled={setHeaderEnabled}
+                    headerNoteId={headerNoteId}
+                />
+            )}
+            {showHeader && note && (
+                <CollectionHeaderInclude note={note} headerNoteId={headerNoteId} />
+            )}
             {ComponentToRender && props && (
                 <div className="note-list-widget-content">
                     <Suspense fallback="">
                         <ComponentToRender {...props} />
                     </Suspense>
                 </div>
+            )}
+        </div>
+    );
+}
+
+function CollectionHeaderControls({ note, enabled, setEnabled, headerNoteId }: { note: FNote; enabled: boolean; setEnabled: (value: boolean) => void; headerNoteId: string | null }) {
+    const [ isSaving, setIsSaving ] = useState(false);
+    const [ isEnsuring, setIsEnsuring ] = useState(false);
+    const [ error, setError ] = useState<string | null>(null);
+    const [ info, setInfo ] = useState<string | null>(null);
+
+    async function ensureHeaderNoteId() {
+        const children = await note.getChildNotes();
+        if (headerNoteId) {
+            const existingById = children.find(child => child.noteId === headerNoteId);
+            if (existingById) {
+                return { noteId: headerNoteId, created: false };
+            }
+
+            // Stale pointer (e.g., header note was deleted). Clear and recreate/link below.
+            await attributes.removeOwnedAttributesByNameOrType(note, "label", "collectionHeaderNoteId");
+        }
+
+        const expectedTitle = `_${note.title}_header`;
+        const existing = children.find(child => child.title === expectedTitle);
+        if (existing) {
+            await attributes.setLabel(note.noteId, "collectionHeaderNoteId", existing.noteId);
+            return { noteId: existing.noteId, created: false };
+        }
+
+        const created = await server.post<{ note?: { noteId: string } }>(`notes/${note.noteId}/children?target=into`, {
+            title: expectedTitle,
+            type: "text",
+            mime: "text/html",
+            content: "<p>Collection header content.</p>"
+        });
+
+        const createdNoteId = created?.note?.noteId;
+        if (!createdNoteId) {
+            throw new Error("Header child note could not be created.");
+        }
+
+        await attributes.setLabel(note.noteId, "collectionHeaderNoteId", createdNoteId);
+        return { noteId: createdNoteId, created: true };
+    }
+
+    async function onToggle(checked: boolean) {
+        setError(null);
+        setInfo(null);
+        setIsSaving(true);
+        try {
+            setEnabled(checked);
+            if (checked) {
+                const ensured = await ensureHeaderNoteId();
+                setInfo(ensured.created
+                    ? `Header child note created (${ensured.noteId}).`
+                    : `Header child note linked (${ensured.noteId}).`);
+            }
+        } catch (e) {
+            setError((e as Error)?.message || "Save failed");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    async function onEnsureNote() {
+        setError(null);
+        setInfo(null);
+        setIsEnsuring(true);
+        try {
+            const ensured = await ensureHeaderNoteId();
+            setInfo(ensured.created
+                ? `Header child note created (${ensured.noteId}).`
+                : `Header child note linked (${ensured.noteId}).`);
+        } catch (e) {
+            setError((e as Error)?.message || "Ensure failed");
+        } finally {
+            setIsEnsuring(false);
+        }
+    }
+
+    return (
+        <div className="collection-header-controls">
+            <label className="collection-header-controls-toggle">
+                <input
+                    type="checkbox"
+                    checked={enabled}
+                    disabled={isSaving}
+                    onChange={(e) => void onToggle((e.target as HTMLInputElement).checked)}
+                />
+                <span>Show collection header</span>
+            </label>
+            <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => void onEnsureNote()}
+                disabled={isEnsuring}
+            >
+                {isEnsuring ? "Ensuring header note..." : "Ensure header child note"}
+            </button>
+            <span className="collection-header-controls-meta">
+                {headerNoteId ? `Header note: ${headerNoteId}` : "Header note not set"}
+            </span>
+            {info && <div className="collection-header-controls-info">{info}</div>}
+            {error && <div className="collection-header-controls-error">{error}</div>}
+        </div>
+    );
+}
+
+function CollectionHeaderInclude({ note, headerNoteId }: { note: FNote; headerNoteId: string | null }) {
+    const [ html, setHtml ] = useState<string>("");
+    const [ isSaving, setIsSaving ] = useState(false);
+    const [ loadError, setLoadError ] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadHeader() {
+            setLoadError(null);
+            setHtml("");
+
+            if (!headerNoteId) {
+                return;
+            }
+
+            setIsSaving(true);
+            try {
+                const headerNote = await froca.getNote(headerNoteId);
+                if (!headerNote) {
+                    throw new Error("Header note not found.");
+                }
+                const content = await headerNote.getContent();
+                if (cancelled) {
+                    return;
+                }
+                setHtml(typeof content === "string" ? content : "");
+            } catch (e) {
+                if (!cancelled) {
+                    setLoadError((e as Error)?.message || "Load failed");
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsSaving(false);
+                }
+            }
+        }
+
+        void loadHeader();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [ note.noteId, headerNoteId, note.blobId ]);
+
+    if (!headerNoteId) {
+        return (
+            <div className="collection-header-include">
+                <div className="collection-header-include-status">No header note configured.</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="collection-header-include">
+            <div className="collection-header-include-status">
+                {loadError ? `Header load failed: ${loadError}` : isSaving ? "Loading header..." : ""}
+            </div>
+            {!loadError && !isSaving && (
+                <div className="collection-header-include-content use-tn-links" dangerouslySetInnerHTML={{ __html: html || "<p></p>" }}></div>
             )}
         </div>
     );
