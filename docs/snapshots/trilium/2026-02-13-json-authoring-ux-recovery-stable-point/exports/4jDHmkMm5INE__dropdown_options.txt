@@ -1,0 +1,203 @@
+[
+  {
+    "domain": "publisher",
+    "id": "microsoft",
+    "label": "Microsoft",
+    "parentId": null,
+    "sort": 10,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Microsoft",
+      "items": [
+        {
+          "name": "core-catalog",
+          "kind": "core",
+          "status": "active",
+          "kindMirror": "core",
+          "weight": 1,
+          "disabled": false,
+          "tags": [
+            { "label": "stable", "score": 10, "category": "workflow" },
+            { "label": "desktop", "score": 7, "category": "ui" }
+          ]
+        },
+        {
+          "name": "edge-track",
+          "kind": "external",
+          "status": "draft",
+          "kindMirror": "external",
+          "weight": 2,
+          "disabled": false,
+          "tags": [
+            { "label": "browser", "score": 8, "category": "data" }
+          ]
+        },
+        {
+          "name": "legacy-import",
+          "kind": "addon",
+          "status": "deprecated",
+          "kindMirror": "addon",
+          "weight": 3,
+          "disabled": true,
+          "tags": []
+        }
+      ]
+    }
+  },
+  {
+    "domain": "publisher",
+    "id": "mozilla",
+    "label": "Mozilla",
+    "parentId": null,
+    "sort": 20,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Mozilla",
+      "items": [
+        {
+          "name": "foundation-stream",
+          "kind": "core",
+          "status": "active",
+          "kindMirror": "core",
+          "weight": 1,
+          "disabled": false,
+          "tags": [
+            { "label": "privacy", "score": 9, "category": "workflow" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "domain": "publisher",
+    "id": "jetbrains",
+    "label": "JetBrains",
+    "parentId": null,
+    "sort": 30,
+    "disabled": false,
+    "meta": {
+      "tagValue": "JetBrains"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "vscode",
+    "label": "VS Code",
+    "parentId": "microsoft",
+    "sort": 10,
+    "disabled": false,
+    "meta": {
+      "tagValue": "VS Code"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "powertoys",
+    "label": "PowerToys",
+    "parentId": "microsoft",
+    "sort": 20,
+    "disabled": false,
+    "meta": {
+      "tagValue": "PowerToys"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "edge",
+    "label": "Edge",
+    "parentId": "microsoft",
+    "sort": 30,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Edge"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "firefox",
+    "label": "Firefox",
+    "parentId": "mozilla",
+    "sort": 10,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Firefox"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "thunderbird",
+    "label": "Thunderbird",
+    "parentId": "mozilla",
+    "sort": 20,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Thunderbird"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "intellij",
+    "label": "IntelliJ IDEA",
+    "parentId": "jetbrains",
+    "sort": 10,
+    "disabled": false,
+    "meta": {
+      "tagValue": "IntelliJ IDEA"
+    }
+  },
+  {
+    "domain": "product",
+    "id": "pycharm",
+    "label": "PyCharm",
+    "parentId": "jetbrains",
+    "sort": 20,
+    "disabled": false,
+    "meta": {
+      "tagValue": "PyCharm"
+    }
+  },
+  {
+    "domain": "platform",
+    "id": "windows",
+    "label": "Windows",
+    "parentId": null,
+    "sort": 10,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Windows"
+    }
+  },
+  {
+    "domain": "platform",
+    "id": "macos",
+    "label": "macOS",
+    "parentId": null,
+    "sort": 20,
+    "disabled": false,
+    "meta": {
+      "tagValue": "macOS"
+    }
+  },
+  {
+    "domain": "platform",
+    "id": "linux",
+    "label": "Linux",
+    "parentId": null,
+    "sort": 30,
+    "disabled": false,
+    "meta": {
+      "tagValue": "Linux"
+    }
+  },
+  {
+    "domain": "platform",
+    "id": "android",
+    "label": "Android",
+    "parentId": null,
+    "sort": 40,
+    "disabled": true,
+    "meta": {
+      "tagValue": "Android"
+    }
+  }
+]

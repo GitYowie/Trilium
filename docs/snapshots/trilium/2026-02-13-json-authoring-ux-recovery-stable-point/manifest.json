@@ -1,0 +1,42 @@
+{
+  "snapshotName": "2026-02-13-json-authoring-ux-recovery-stable-point",
+  "createdUtc": "2026-02-13T16:45:27.030342+00:00",
+  "dbBackupPath": "c:\\Users\\Bryson\\Documents\\Projects\\TriliumNext\\triliumNext_dev\\apps\\desktop\\data\\backup\\2026-02-13-json-authoring-ux-recovery-stable-point.db",
+  "notes": [
+    {
+      "noteId": "VNkUo2Se8J6e",
+      "title": "json authoring mvp js",
+      "blobId": "0H6Jnz0YlXe2sMT9FQd6",
+      "utcDateModified": "2026-02-13 15:49:00.301Z",
+      "contentLength": 56107
+    },
+    {
+      "noteId": "xAEs1WrfPCIp",
+      "title": "MVP Dataset Config",
+      "blobId": "QXHsUWb6MfngShOFJGQk",
+      "utcDateModified": "2026-02-13 11:36:36.257Z",
+      "contentLength": 2623
+    },
+    {
+      "noteId": "4jDHmkMm5INE",
+      "title": "dropdown options",
+      "blobId": "fBflC8Ceb37WPPEz0Hz9",
+      "utcDateModified": "2026-02-13 11:40:00.508Z",
+      "contentLength": 3947
+    },
+    {
+      "noteId": "NY903UTDSAGD",
+      "title": "json authoring mvp html",
+      "blobId": "USVIIjYRAOGE5YeBT9ZB",
+      "utcDateModified": "2026-02-13 00:53:09.585Z",
+      "contentLength": 1761
+    },
+    {
+      "noteId": "Qb2ghgVxPSAX",
+      "title": "JSON Authoring UI (MVP)",
+      "blobId": "sQL61hmXcSNPjrrdvCiG",
+      "utcDateModified": "2026-02-13 11:44:56.076Z",
+      "contentLength": 10775
+    }
+  ]
+}
