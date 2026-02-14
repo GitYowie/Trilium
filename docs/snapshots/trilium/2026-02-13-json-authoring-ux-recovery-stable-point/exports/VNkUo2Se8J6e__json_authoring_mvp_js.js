@@ -782,6 +782,12 @@
         }, 0);
     }
 
+    function extractPathFromValidationMessage(message) {
+        if (!isNonEmptyString(message)) return null;
+        const match = message.match(/'([^']+)'/);
+        return match && isNonEmptyString(match[1]) ? match[1] : null;
+    }
+
     function normalizeSubgridRows(arr) {
         return (Array.isArray(arr) ? arr : []).map(function (item) {
             if (item && typeof item === 'object' && !Array.isArray(item)) return deepClone(item);
@@ -803,10 +809,11 @@
         return Array.from(set);
     }
 
-    function openJsonArrayGridEditor(initialValue, onSave, subgridConfig, contextLabel) {
+    function openJsonArrayGridEditor(initialValue, onSave, subgridConfig, contextLabel, requestedPath) {
         const rows = normalizeSubgridRows(initialValue);
         let pendingFocusKey = null;
         let pendingOpenNestedKey = null;
+        let pendingOpenNestedPath = isNonEmptyString(requestedPath) ? requestedPath : null;
 
         function ensureAtLeastOneRow() {
             if (rows.length > 0) return;
@@ -1022,6 +1029,25 @@
 
             const colDefs = getRuntimeColumnDefs();
             const validation = validateSubgridRowsDetailed(colDefs);
+            const pendingOpenPathByKey = new Map();
+
+            if (isNonEmptyString(pendingOpenNestedPath)) {
+                const normalized = pendingOpenNestedPath.trim();
+                const m = normalized.match(/^\[(\d+)\]\.([^.[]+)(.*)$/);
+                if (m) {
+                    const ri = Number(m[1]);
+                    const colKey = m[2];
+                    const tail = m[3] || '';
+                    const focusKey = 'subgrid:' + ri + ':' + colKey;
+                    const colDef = colDefs.find(function (d) { return d && d.key === colKey; });
+                    pendingFocusKey = focusKey;
+                    if (colDef && colDef.type === 'json-array') {
+                        pendingOpenNestedKey = focusKey;
+                        pendingOpenPathByKey.set(focusKey, tail);
+                    }
+                }
+                pendingOpenNestedPath = null;
+            }
 
             const table = document.createElement('table');
             table.style.width = '100%';
@@ -1118,10 +1144,11 @@
                             const nestedContext = contextLabel
                                 ? (contextLabel + '.' + c)
                                 : c;
+                            const nextPath = pendingOpenPathByKey.get('subgrid:' + ri + ':' + c) || null;
                             openJsonArrayGridEditor(Array.isArray(row[c]) ? row[c] : [], function (nextArray) {
                                 row[c] = nextArray;
                                 renderGrid();
-                            }, nestedConfig, nestedContext);
+                            }, nestedConfig, nestedContext, nextPath);
                         };
 
                         wrap.appendChild(summary);
@@ -1221,6 +1248,7 @@
 
             if (issues.length > 0) {
                 const firstInvalidKey = validation.cellErrors.keys().next().value || null;
+                const firstInvalidPath = extractPathFromValidationMessage(issues[0]);
                 openWarningsModal(
                     'Subgrid validation failed (' + issues.length + ')',
                     issues.length > 200 ? issues.slice(0, 200).concat(['... +' + (issues.length - 200) + ' more']) : issues,
@@ -1237,6 +1265,9 @@
                             pendingFocusKey = focusKey;
                             if (colDef && colDef.type === 'json-array') {
                                 pendingOpenNestedKey = focusKey;
+                                if (isNonEmptyString(firstInvalidPath) && firstInvalidPath.startsWith(colKey)) {
+                                    pendingOpenNestedPath = firstInvalidPath.slice(colKey.length);
+                                }
                             }
                             renderGrid();
                         }
@@ -1261,7 +1292,7 @@
         }, 0);
     }
 
-    function createCellEditor(value, type, onChange, errorMessage, focusKey, subgridConfig) {
+    function createCellEditor(value, type, onChange, errorMessage, focusKey, subgridConfig, requestedPath) {
         let input;
 
         if (type === 'boolean') {
@@ -1347,7 +1378,7 @@
                         input.value = JSON.stringify(currentJsonArray);
                         onChange(currentJsonArray);
                         refreshJsonArraySummary(currentJsonArray);
-                    }, subgridConfig, focusKey);
+                    }, subgridConfig, focusKey, requestedPath);
                 };
                 wrapper.appendChild(gridBtn);
             }
@@ -1386,6 +1417,12 @@
 
         const focusState = captureFocusState(mountEl);
         const validation = validateRowsDetailed(state.rows, state.config);
+        const pendingOpenMainSubgridKey = isNonEmptyString(state.requestedOpenMainSubgridKey)
+            ? state.requestedOpenMainSubgridKey
+            : null;
+        const pendingOpenMainSubgridPath = isNonEmptyString(state.requestedOpenMainSubgridPath)
+            ? state.requestedOpenMainSubgridPath
+            : null;
 
         const visibleIndexes = [];
         for (let i = 0; i < state.rows.length; i++) {
@@ -1459,6 +1496,10 @@
                             state.requestedFocusKey = focusKey;
                             if (targetCol && targetCol.type === 'json-array') {
                                 state.requestedOpenMainSubgridKey = focusKey;
+                                const firstInvalidPath = extractPathFromValidationMessage(currentValidation.errors[0]);
+                                if (isNonEmptyString(firstInvalidPath) && firstInvalidPath.startsWith(colKey)) {
+                                    state.requestedOpenMainSubgridPath = firstInvalidPath.slice(colKey.length);
+                                }
                             }
                             render(state);
                         }
@@ -1663,10 +1704,12 @@
                 const key = actualRowIndex + '|' + col.key;
                 const cellError = validation.cellErrors.get(key) || null;
                 const subgridConfig = state.config && state.config.subgrids ? state.config.subgrids[col.key] : null;
+                const focusKey = 'cell:' + actualRowIndex + ':' + col.key;
+                const requestedPathForCell = pendingOpenMainSubgridKey === focusKey ? pendingOpenMainSubgridPath : null;
                 const editor = createCellEditor(value, col.type, function (nextVal) {
                     setByPath(row, col.key, nextVal);
                     state.dirty = true;
-                }, cellError, 'cell:' + actualRowIndex + ':' + col.key, subgridConfig);
+                }, cellError, focusKey, subgridConfig, requestedPathForCell);
                 td.appendChild(editor);
                 tr.appendChild(td);
             });
@@ -1737,11 +1780,9 @@
         const effectiveFocusState = isNonEmptyString(state.requestedFocusKey)
             ? { focusKey: state.requestedFocusKey, selectionStart: null, selectionEnd: null }
             : focusState;
-        const pendingOpenMainSubgridKey = isNonEmptyString(state.requestedOpenMainSubgridKey)
-            ? state.requestedOpenMainSubgridKey
-            : null;
         state.requestedFocusKey = null;
         state.requestedOpenMainSubgridKey = null;
+        state.requestedOpenMainSubgridPath = null;
         restoreFocusState(mountEl, effectiveFocusState);
         if (pendingOpenMainSubgridKey) {
             setTimeout(function () {
