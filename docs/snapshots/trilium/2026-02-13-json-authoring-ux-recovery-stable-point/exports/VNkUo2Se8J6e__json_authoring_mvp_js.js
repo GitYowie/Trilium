@@ -623,7 +623,6 @@
         panel.style.maxWidth = '900px';
         panel.style.maxHeight = '75vh';
         panel.style.overflow = 'auto';
-        panel.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
         panel.addEventListener('mousedown', function (event) { event.stopPropagation(); });
         panel.addEventListener('click', function (event) { event.stopPropagation(); });
 
@@ -670,7 +669,9 @@
         // Keep modal interaction explicit (Close button / Esc) to avoid accidental click-capture issues.
         document.body.appendChild(overlay);
         document.addEventListener('keydown', onEsc, true);
-        closeBtn.focus();
+        setTimeout(function () {
+            if (document.activeElement === document.body && typeof closeBtn.focus === 'function') closeBtn.focus();
+        }, 0);
     }
 
     function normalizeSubgridRows(arr) {
@@ -769,6 +770,79 @@
             });
         }
 
+        function validateSubgridRowsDetailed(colDefs) {
+            const errors = [];
+            const cellErrors = new Map();
+
+            function mark(ri, key, message) {
+                cellErrors.set(ri + '|' + key, message);
+                errors.push('Row ' + (ri + 1) + ' [' + key + ']: ' + message);
+            }
+
+            for (let ri = 0; ri < rows.length; ri++) {
+                for (const colDef of colDefs) {
+                    const val = rows[ri][colDef.key];
+                    const valCfg = getValidationConfig(colDef);
+
+                    if (colDef.required) {
+                        const missing = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
+                        if (missing) {
+                            mark(ri, colDef.key, getRuleMessage(colDef, 'required', 'is required.'));
+                            continue;
+                        }
+                    }
+
+                    if (val !== null && typeof val !== 'undefined' && !typeValid(val, colDef.type)) {
+                        mark(ri, colDef.key, getRuleMessage(colDef, 'type', 'must be ' + colDef.type + '.'));
+                        continue;
+                    }
+
+                    const isEmpty = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
+                    if (isEmpty) continue;
+
+                    const allowedValues = getAllowedValues(colDef);
+                    if (allowedValues.length > 0 && !allowedValues.includes(String(val))) {
+                        mark(ri, colDef.key, getRuleMessage(colDef, 'allowedValues', 'must be one of: ' + allowedValues.join(', ')));
+                    }
+
+                    if (typeof valCfg.enumRequired === 'boolean' && valCfg.enumRequired === true && allowedValues.length > 0 && !allowedValues.includes(String(val))) {
+                        mark(ri, colDef.key, getRuleMessage(colDef, 'enumRequired', 'requires a valid enum value.'));
+                    }
+
+                    if (colDef.type === 'number' && typeof val === 'number' && Number.isFinite(val)) {
+                        if (typeof valCfg.min === 'number' && val < valCfg.min) {
+                            mark(ri, colDef.key, getRuleMessage(colDef, 'min', 'must be >= ' + valCfg.min + '.'));
+                        }
+                        if (typeof valCfg.max === 'number' && val > valCfg.max) {
+                            mark(ri, colDef.key, getRuleMessage(colDef, 'max', 'must be <= ' + valCfg.max + '.'));
+                        }
+                    }
+
+                    if (colDef.type === 'string' || colDef.type === 'string|null') {
+                        const s = String(val);
+                        if (typeof valCfg.minLength === 'number' && s.length < valCfg.minLength) {
+                            mark(ri, colDef.key, getRuleMessage(colDef, 'minLength', 'must be at least ' + valCfg.minLength + ' chars.'));
+                        }
+                        if (typeof valCfg.maxLength === 'number' && s.length > valCfg.maxLength) {
+                            mark(ri, colDef.key, getRuleMessage(colDef, 'maxLength', 'must be at most ' + valCfg.maxLength + ' chars.'));
+                        }
+                        if (isNonEmptyString(valCfg.pattern)) {
+                            try {
+                                const rx = new RegExp(valCfg.pattern);
+                                if (!rx.test(s)) {
+                                    mark(ri, colDef.key, getRuleMessage(colDef, 'pattern', 'does not match required pattern.'));
+                                }
+                            } catch {
+                                // ignore invalid pattern config
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { errors: errors, cellErrors: cellErrors };
+        }
+
         function summarizeJsonArrayValue(value) {
             if (value === null || typeof value === 'undefined' || value === '') return 'Nested rows: 0';
             if (!Array.isArray(value)) return 'Invalid JSON array';
@@ -786,7 +860,6 @@
         overlay.style.justifyContent = 'center';
 
         const panel = document.createElement('div');
-        panel.addEventListener('pointerdown', function (event) { event.stopPropagation(); });
         panel.addEventListener('mousedown', function (event) { event.stopPropagation(); });
         panel.addEventListener('click', function (event) { event.stopPropagation(); });
         panel.style.background = '#fff';
@@ -838,6 +911,7 @@
             titleEl.textContent = contextPrefix + '(rows: ' + rows.length + ')';
 
             const colDefs = getRuntimeColumnDefs();
+            const validation = validateSubgridRowsDetailed(colDefs);
 
             const table = document.createElement('table');
             table.style.width = '100%';
@@ -871,6 +945,26 @@
                     const td = document.createElement('td');
                     td.style.padding = '4px';
                     td.style.borderBottom = '1px solid #eee';
+                    const cellKey = ri + '|' + c;
+                    const cellError = validation.cellErrors.get(cellKey) || null;
+
+                    function applyCellErrorStyle(el) {
+                        if (!cellError || !el) return;
+                        el.style.border = '1px solid #b63a2b';
+                        el.style.backgroundColor = '#fff5f5';
+                        el.title = cellError;
+                    }
+
+                    function appendCellError(container) {
+                        if (!cellError) return;
+                        const errEl = document.createElement('div');
+                        errEl.style.marginTop = '3px';
+                        errEl.style.fontSize = '11px';
+                        errEl.style.lineHeight = '1.2';
+                        errEl.style.color = '#b63a2b';
+                        errEl.textContent = cellError;
+                        container.appendChild(errEl);
+                    }
 
                     if (colDef.type === 'boolean') {
                         const input = document.createElement('select');
@@ -884,8 +978,10 @@
                         input.appendChild(optFalse);
                         input.value = row[c] === true ? 'true' : 'false';
                         input.style.width = '100%';
+                        applyCellErrorStyle(input);
                         input.onchange = function () { row[c] = input.value === 'true'; };
                         td.appendChild(input);
+                        appendCellError(td);
                     } else if (colDef.type === 'json-array') {
                         if (!Array.isArray(row[c])) row[c] = [];
 
@@ -899,6 +995,7 @@
                         const txt = summarizeJsonArrayValue(row[c]);
                         summary.textContent = txt;
                         summary.style.color = txt === 'Invalid JSON array' ? '#b63a2b' : '#666';
+                        if (cellError) summary.style.color = '#b63a2b';
 
                         const btn = document.createElement('button');
                         btn.type = 'button';
@@ -916,12 +1013,16 @@
 
                         wrap.appendChild(summary);
                         wrap.appendChild(btn);
+                        appendCellError(wrap);
                         td.appendChild(wrap);
                     } else {
                         const input = document.createElement('input');
-                        input.type = colDef.type === 'number' ? 'number' : 'text';
+                        // Use text input for numeric fields so invalid text can be entered and validated visibly.
+                        input.type = 'text';
+                        if (colDef.type === 'number') input.inputMode = 'decimal';
                         input.value = row[c] == null ? '' : String(row[c]);
                         input.style.width = '100%';
+                        applyCellErrorStyle(input);
                         input.oninput = function () {
                             if (colDef.type === 'number') {
                                 const n = Number(input.value);
@@ -931,6 +1032,7 @@
                             row[c] = input.value;
                         };
                         td.appendChild(input);
+                        appendCellError(td);
                     }
 
                     tr.appendChild(td);
@@ -949,6 +1051,16 @@
             });
             table.appendChild(tbody);
             panel.appendChild(table);
+
+            if (validation.errors.length > 0) {
+                const summary = document.createElement('div');
+                summary.style.marginTop = '8px';
+                summary.style.fontFamily = 'monospace';
+                summary.style.fontSize = '12px';
+                summary.style.color = '#b63a2b';
+                summary.textContent = 'Validation: ' + validation.errors.length + ' issue(s) in subgrid.';
+                panel.appendChild(summary);
+            }
         }
 
         function mkBtn(label, handler) {
@@ -972,78 +1084,15 @@
 
         toolbar.appendChild(mkBtn('Save subgrid', function () {
             const colDefs = getRuntimeColumnDefs();
-            const issues = [];
-
-            function pushIssue(ri, colDef, message) {
-                issues.push('Row ' + (ri + 1) + ' [' + colDef.key + ']: ' + message);
-            }
-
-            for (let ri = 0; ri < rows.length; ri++) {
-                for (const colDef of colDefs) {
-                    const val = rows[ri][colDef.key];
-                    const valCfg = getValidationConfig(colDef);
-
-                    if (colDef.required) {
-                        const missing = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
-                        if (missing) {
-                            pushIssue(ri, colDef, getRuleMessage(colDef, 'required', 'is required.'));
-                            continue;
-                        }
-                    }
-
-                    if (val !== null && typeof val !== 'undefined' && !typeValid(val, colDef.type)) {
-                        pushIssue(ri, colDef, getRuleMessage(colDef, 'type', 'must be ' + colDef.type + '.'));
-                        continue;
-                    }
-
-                    const isEmpty = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
-                    if (isEmpty) continue;
-
-                    const allowedValues = getAllowedValues(colDef);
-                    if (allowedValues.length > 0 && !allowedValues.includes(String(val))) {
-                        pushIssue(ri, colDef, getRuleMessage(colDef, 'allowedValues', 'must be one of: ' + allowedValues.join(', ')));
-                    }
-
-                    if (typeof valCfg.enumRequired === 'boolean' && valCfg.enumRequired === true && allowedValues.length > 0 && !allowedValues.includes(String(val))) {
-                        pushIssue(ri, colDef, getRuleMessage(colDef, 'enumRequired', 'requires a valid enum value.'));
-                    }
-
-                    if (colDef.type === 'number' && typeof val === 'number' && Number.isFinite(val)) {
-                        if (typeof valCfg.min === 'number' && val < valCfg.min) {
-                            pushIssue(ri, colDef, getRuleMessage(colDef, 'min', 'must be >= ' + valCfg.min + '.'));
-                        }
-                        if (typeof valCfg.max === 'number' && val > valCfg.max) {
-                            pushIssue(ri, colDef, getRuleMessage(colDef, 'max', 'must be <= ' + valCfg.max + '.'));
-                        }
-                    }
-
-                    if (colDef.type === 'string' || colDef.type === 'string|null') {
-                        const s = String(val);
-                        if (typeof valCfg.minLength === 'number' && s.length < valCfg.minLength) {
-                            pushIssue(ri, colDef, getRuleMessage(colDef, 'minLength', 'must be at least ' + valCfg.minLength + ' chars.'));
-                        }
-                        if (typeof valCfg.maxLength === 'number' && s.length > valCfg.maxLength) {
-                            pushIssue(ri, colDef, getRuleMessage(colDef, 'maxLength', 'must be at most ' + valCfg.maxLength + ' chars.'));
-                        }
-                        if (isNonEmptyString(valCfg.pattern)) {
-                            try {
-                                const rx = new RegExp(valCfg.pattern);
-                                if (!rx.test(s)) {
-                                    pushIssue(ri, colDef, getRuleMessage(colDef, 'pattern', 'does not match required pattern.'));
-                                }
-                            } catch {
-                                // ignore invalid pattern config
-                            }
-                        }
-                    }
-                }
-            }
+            const validation = validateSubgridRowsDetailed(colDefs);
+            const issues = validation.errors;
 
             if (issues.length > 0) {
                 openWarningsModal(
                     'Subgrid validation failed (' + issues.length + ')',
                     issues.length > 200 ? issues.slice(0, 200).concat(['... +' + (issues.length - 200) + ' more']) : issues
                 );
+                renderGrid();
                 return;
             }
 
@@ -1155,7 +1204,9 @@
             input = wrapper;
         } else {
             input = document.createElement('input');
-            input.type = type === 'number' ? 'number' : 'text';
+            // Use text input for numeric fields so invalid text can be entered and validated visibly.
+            input.type = 'text';
+            if (type === 'number') input.inputMode = 'decimal';
             input.value = value == null ? '' : String(value);
             input.addEventListener('input', function () { onChange(parseTypeValue(input.value, type)); });
             input.addEventListener('change', function () { onChange(parseTypeValue(input.value, type)); });
