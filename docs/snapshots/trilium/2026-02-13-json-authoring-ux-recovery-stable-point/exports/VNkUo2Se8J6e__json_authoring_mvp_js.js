@@ -605,7 +605,7 @@
         state.messageColor = '#333';
     }
 
-    function openWarningsModal(title, lines) {
+    function openWarningsModal(title, lines, options) {
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
         overlay.style.inset = '0';
@@ -643,6 +643,24 @@
         const controls = document.createElement('div');
         controls.style.display = 'flex';
         controls.style.gap = '8px';
+        const opts = options && typeof options === 'object' ? options : {};
+        const showPrimary = typeof opts.onPrimaryAction === 'function';
+        const primaryLabel = isNonEmptyString(opts.primaryLabel) ? opts.primaryLabel : 'Go to first invalid cell';
+
+        if (showPrimary) {
+            const primaryBtn = document.createElement('button');
+            primaryBtn.type = 'button';
+            primaryBtn.textContent = primaryLabel;
+            primaryBtn.onclick = function () {
+                try {
+                    opts.onPrimaryAction();
+                } finally {
+                    close();
+                }
+            };
+            controls.appendChild(primaryBtn);
+        }
+
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.textContent = 'Close';
@@ -697,6 +715,7 @@
 
     function openJsonArrayGridEditor(initialValue, onSave, subgridConfig, contextLabel) {
         const rows = normalizeSubgridRows(initialValue);
+        let pendingFocusKey = null;
 
         function ensureAtLeastOneRow() {
             if (rows.length > 0) return;
@@ -978,6 +997,7 @@
                         input.appendChild(optFalse);
                         input.value = row[c] === true ? 'true' : 'false';
                         input.style.width = '100%';
+                        input.dataset.focusKey = 'subgrid:' + ri + ':' + c;
                         applyCellErrorStyle(input);
                         input.onchange = function () { row[c] = input.value === 'true'; };
                         td.appendChild(input);
@@ -1000,6 +1020,7 @@
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.textContent = 'Edit nested';
+                        btn.dataset.focusKey = 'subgrid:' + ri + ':' + c;
                         btn.onclick = function () {
                             const nestedConfig = colDef.subgrid || null;
                             const nestedContext = contextLabel
@@ -1022,6 +1043,7 @@
                         if (colDef.type === 'number') input.inputMode = 'decimal';
                         input.value = row[c] == null ? '' : String(row[c]);
                         input.style.width = '100%';
+                        input.dataset.focusKey = 'subgrid:' + ri + ':' + c;
                         applyCellErrorStyle(input);
                         input.oninput = function () {
                             if (colDef.type === 'number') {
@@ -1061,6 +1083,15 @@
                 summary.textContent = 'Validation: ' + validation.errors.length + ' issue(s) in subgrid.';
                 panel.appendChild(summary);
             }
+
+            if (pendingFocusKey) {
+                const key = pendingFocusKey;
+                pendingFocusKey = null;
+                setTimeout(function () {
+                    const target = panel.querySelector('[data-focus-key="' + key + '"]');
+                    if (target && typeof target.focus === 'function') target.focus();
+                }, 0);
+            }
         }
 
         function mkBtn(label, handler) {
@@ -1088,9 +1119,22 @@
             const issues = validation.errors;
 
             if (issues.length > 0) {
+                const firstInvalidKey = validation.cellErrors.keys().next().value || null;
                 openWarningsModal(
                     'Subgrid validation failed (' + issues.length + ')',
-                    issues.length > 200 ? issues.slice(0, 200).concat(['... +' + (issues.length - 200) + ' more']) : issues
+                    issues.length > 200 ? issues.slice(0, 200).concat(['... +' + (issues.length - 200) + ' more']) : issues,
+                    firstInvalidKey ? {
+                        primaryLabel: 'Go to first invalid cell',
+                        onPrimaryAction: function () {
+                            const parts = String(firstInvalidKey).split('|');
+                            if (parts.length !== 2) return;
+                            const ri = Number(parts[0]);
+                            const colKey = parts[1];
+                            if (!Number.isFinite(ri) || !isNonEmptyString(colKey)) return;
+                            pendingFocusKey = 'subgrid:' + ri + ':' + colKey;
+                            renderGrid();
+                        }
+                    } : null
                 );
                 renderGrid();
                 return;
@@ -1287,11 +1331,26 @@
             if (currentValidation.errors.length) {
                 state.message = 'Validation failed (' + currentValidation.errors.length + '): ' + currentValidation.errors[0];
                 state.messageColor = '#b63a2b';
+                const firstInvalidKey = currentValidation.cellErrors.keys().next().value || null;
                 openWarningsModal(
                     'Validation failed (' + currentValidation.errors.length + ')',
                     currentValidation.errors.length > 300
                         ? currentValidation.errors.slice(0, 300).concat(['... +' + (currentValidation.errors.length - 300) + ' more'])
-                        : currentValidation.errors
+                        : currentValidation.errors,
+                    firstInvalidKey ? {
+                        primaryLabel: 'Go to first invalid cell',
+                        onPrimaryAction: function () {
+                            const parts = String(firstInvalidKey).split('|');
+                            if (parts.length !== 2) return;
+                            const ri = Number(parts[0]);
+                            const colKey = parts[1];
+                            if (!Number.isFinite(ri) || !isNonEmptyString(colKey)) return;
+                            state.filterText = '';
+                            state.columnFilters = {};
+                            state.requestedFocusKey = 'cell:' + ri + ':' + colKey;
+                            render(state);
+                        }
+                    } : null
                 );
                 render(state);
                 return;
@@ -1563,7 +1622,11 @@
         mountEl.appendChild(validationDetails);
         mountEl.appendChild(message);
 
-        restoreFocusState(mountEl, focusState);
+        const effectiveFocusState = isNonEmptyString(state.requestedFocusKey)
+            ? { focusKey: state.requestedFocusKey, selectionStart: null, selectionEnd: null }
+            : focusState;
+        state.requestedFocusKey = null;
+        restoreFocusState(mountEl, effectiveFocusState);
     }
 
     async function resolveRuntimeConfig(initConfig) {

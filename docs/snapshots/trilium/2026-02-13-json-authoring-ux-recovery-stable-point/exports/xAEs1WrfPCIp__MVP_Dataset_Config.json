@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 1,
   "targetNoteId": "4jDHmkMm5INE",
   "datasetType": "arrayOfObjects",
   "columns": [
@@ -220,8 +220,7 @@
                 }
               ]
             }
-          },
-          "validation": {}
+          }
         }
       ],
       "optionSources": {
