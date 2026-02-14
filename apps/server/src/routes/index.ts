@@ -125,7 +125,22 @@ function getThemeCssUrl(theme: string, themeNote: BNote | null) {
 }
 
 function getAppCssNoteIds() {
-    return attributeService.getNotesWithLabel("appCss").map((note) => note.noteId);
+    return attributeService
+        .getNotesWithLabel("appCss")
+        .slice()
+        .sort((a, b) => {
+            const aPriority = Number(a.getAttributeValue("label", "appCssPriority") ?? 1000);
+            const bPriority = Number(b.getAttributeValue("label", "appCssPriority") ?? 1000);
+            const safeAPriority = Number.isFinite(aPriority) ? aPriority : 1000;
+            const safeBPriority = Number.isFinite(bPriority) ? bPriority : 1000;
+
+            if (safeAPriority !== safeBPriority) {
+                return safeAPriority - safeBPriority;
+            }
+
+            return a.noteId.localeCompare(b.noteId);
+        })
+        .map((note) => note.noteId);
 }
 
 export default {
