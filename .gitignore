@@ -39,6 +39,7 @@ test-output
 
 apps/*/data*
 apps/*/out
+apps/desktop/test.json
 upload
 
 .rollup.cache
