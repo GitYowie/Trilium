@@ -736,6 +736,41 @@
         const opts = options && typeof options === 'object' ? options : {};
         const showPrimary = typeof opts.onPrimaryAction === 'function';
         const primaryLabel = isNonEmptyString(opts.primaryLabel) ? opts.primaryLabel : 'Go to first invalid cell';
+        const firstInvalidPath = isNonEmptyString(opts.firstInvalidPath) ? opts.firstInvalidPath : null;
+
+        if (firstInvalidPath) {
+            const pathWrap = document.createElement('div');
+            pathWrap.style.marginBottom = '10px';
+            pathWrap.style.display = 'flex';
+            pathWrap.style.gap = '8px';
+            pathWrap.style.alignItems = 'center';
+            pathWrap.style.flexWrap = 'wrap';
+
+            const pathLabel = document.createElement('div');
+            pathLabel.style.fontFamily = 'monospace';
+            pathLabel.style.fontSize = '12px';
+            pathLabel.style.color = '#444';
+            pathLabel.textContent = 'First invalid path: ' + firstInvalidPath;
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.textContent = 'Copy path';
+            copyBtn.onclick = async function () {
+                try {
+                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        await navigator.clipboard.writeText(firstInvalidPath);
+                        copyBtn.textContent = 'Copied';
+                        setTimeout(function () { copyBtn.textContent = 'Copy path'; }, 1000);
+                    }
+                } catch {
+                    // no-op
+                }
+            };
+
+            pathWrap.appendChild(pathLabel);
+            pathWrap.appendChild(copyBtn);
+            panel.appendChild(pathWrap);
+        }
 
         if (showPrimary) {
             const primaryBtn = document.createElement('button');
@@ -1254,6 +1289,7 @@
                     issues.length > 200 ? issues.slice(0, 200).concat(['... +' + (issues.length - 200) + ' more']) : issues,
                     firstInvalidKey ? {
                         primaryLabel: 'Go to first invalid cell',
+                        firstInvalidPath: firstInvalidPath,
                         onPrimaryAction: function () {
                             const parts = String(firstInvalidKey).split('|');
                             if (parts.length !== 2) return;
@@ -1483,6 +1519,7 @@
                         : currentValidation.errors,
                     firstInvalidKey ? {
                         primaryLabel: 'Go to first invalid cell',
+                        firstInvalidPath: extractPathFromValidationMessage(currentValidation.errors[0]),
                         onPrimaryAction: function () {
                             const parts = String(firstInvalidKey).split('|');
                             if (parts.length !== 2) return;
