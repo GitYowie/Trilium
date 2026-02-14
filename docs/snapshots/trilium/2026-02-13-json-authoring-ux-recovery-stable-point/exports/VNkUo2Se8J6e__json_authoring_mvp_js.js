@@ -268,6 +268,7 @@
         const cellErrors = new Map();
         const rowSummaryMap = new Map();
         const cols = Array.isArray(config.columns) ? config.columns : [];
+        const subgrids = config && config.subgrids && typeof config.subgrids === 'object' ? config.subgrids : {};
 
         function markCell(rowIndex, colKey, message) {
             cellErrors.set(rowIndex + '|' + colKey, message);
@@ -278,6 +279,91 @@
             markCell(rowIndex, colKey, message);
             if (!rowSummaryMap.has(rowIndex)) rowSummaryMap.set(rowIndex, new Set());
             rowSummaryMap.get(rowIndex).add(colKey);
+        }
+
+        function validateNestedArrayValue(arrayVal, subgridConfig, rowIndex, rootColKey, pathPrefix) {
+            if (!Array.isArray(arrayVal)) return;
+            if (!subgridConfig || !Array.isArray(subgridConfig.columns)) return;
+
+            const subCols = subgridConfig.columns.map(function (raw) {
+                if (typeof raw === 'string') return { key: raw, type: 'string', required: false };
+                return raw || null;
+            }).filter(function (c) { return c && c.key; });
+
+            arrayVal.forEach(function (item, nestedRowIndex) {
+                const nestedRow = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+                subCols.forEach(function (subCol) {
+                    const val = nestedRow[subCol.key];
+                    const valCfg = getValidationConfig(subCol);
+                    const currentPath = pathPrefix + '[' + nestedRowIndex + '].' + subCol.key;
+
+                    if (subCol.required) {
+                        const missing = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
+                        if (missing) {
+                            const msg = getRuleMessage(subCol, 'required', "Row " + (rowIndex + 1) + ": '" + currentPath + "' is required.");
+                            addIssue(rowIndex, rootColKey, msg);
+                            return;
+                        }
+                    }
+
+                    if (val !== null && typeof val !== 'undefined' && !typeValid(val, subCol.type)) {
+                        const msg = getRuleMessage(subCol, 'type', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be " + subCol.type + '.');
+                        addIssue(rowIndex, rootColKey, msg);
+                        return;
+                    }
+
+                    const isEmpty = val === null || typeof val === 'undefined' || (typeof val === 'string' && val.trim() === '');
+                    if (isEmpty) return;
+
+                    const allowedValues = getAllowedValues(subCol);
+                    if (allowedValues.length > 0 && !allowedValues.includes(String(val))) {
+                        const msg = getRuleMessage(subCol, 'allowedValues', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be one of: " + allowedValues.join(', '));
+                        addIssue(rowIndex, rootColKey, msg);
+                    }
+
+                    if (typeof valCfg.enumRequired === 'boolean' && valCfg.enumRequired === true && allowedValues.length > 0 && !allowedValues.includes(String(val))) {
+                        const msg = getRuleMessage(subCol, 'enumRequired', "Row " + (rowIndex + 1) + ": '" + currentPath + "' requires a valid enum value.");
+                        addIssue(rowIndex, rootColKey, msg);
+                    }
+
+                    if (subCol.type === 'number' && typeof val === 'number' && Number.isFinite(val)) {
+                        if (typeof valCfg.min === 'number' && val < valCfg.min) {
+                            const msg = getRuleMessage(subCol, 'min', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be >= " + valCfg.min + '.');
+                            addIssue(rowIndex, rootColKey, msg);
+                        }
+                        if (typeof valCfg.max === 'number' && val > valCfg.max) {
+                            const msg = getRuleMessage(subCol, 'max', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be <= " + valCfg.max + '.');
+                            addIssue(rowIndex, rootColKey, msg);
+                        }
+                    }
+
+                    if (subCol.type === 'string' || subCol.type === 'string|null') {
+                        const s = String(val);
+                        if (typeof valCfg.minLength === 'number' && s.length < valCfg.minLength) {
+                            const msg = getRuleMessage(subCol, 'minLength', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be at least " + valCfg.minLength + ' characters.');
+                            addIssue(rowIndex, rootColKey, msg);
+                        }
+                        if (typeof valCfg.maxLength === 'number' && s.length > valCfg.maxLength) {
+                            const msg = getRuleMessage(subCol, 'maxLength', "Row " + (rowIndex + 1) + ": '" + currentPath + "' must be at most " + valCfg.maxLength + ' characters.');
+                            addIssue(rowIndex, rootColKey, msg);
+                        }
+                        if (isNonEmptyString(valCfg.pattern)) {
+                            try {
+                                const rx = new RegExp(valCfg.pattern);
+                                if (!rx.test(s)) {
+                                    const msg = getRuleMessage(subCol, 'pattern', "Row " + (rowIndex + 1) + ": '" + currentPath + "' does not match required pattern.");
+                                    addIssue(rowIndex, rootColKey, msg);
+                                }
+                            } catch {
+                            }
+                        }
+                    }
+
+                    if (subCol.type === 'json-array' && Array.isArray(val) && subCol.subgrid) {
+                        validateNestedArrayValue(val, subCol.subgrid, rowIndex, rootColKey, currentPath);
+                    }
+                });
+            });
         }
 
         rows.forEach(function (row, rowIndex) {
@@ -345,6 +431,10 @@
                         } catch {
                         }
                     }
+                }
+
+                if (col.type === 'json-array' && Array.isArray(val) && subgrids[col.key]) {
+                    validateNestedArrayValue(val, subgrids[col.key], rowIndex, col.key, col.key);
                 }
             });
         });
@@ -716,6 +806,7 @@
     function openJsonArrayGridEditor(initialValue, onSave, subgridConfig, contextLabel) {
         const rows = normalizeSubgridRows(initialValue);
         let pendingFocusKey = null;
+        let pendingOpenNestedKey = null;
 
         function ensureAtLeastOneRow() {
             if (rows.length > 0) return;
@@ -1021,6 +1112,7 @@
                         btn.type = 'button';
                         btn.textContent = 'Edit nested';
                         btn.dataset.focusKey = 'subgrid:' + ri + ':' + c;
+                        btn.dataset.openSubgridKey = 'subgrid:' + ri + ':' + c;
                         btn.onclick = function () {
                             const nestedConfig = colDef.subgrid || null;
                             const nestedContext = contextLabel
@@ -1092,6 +1184,15 @@
                     if (target && typeof target.focus === 'function') target.focus();
                 }, 0);
             }
+
+            if (pendingOpenNestedKey) {
+                const openKey = pendingOpenNestedKey;
+                pendingOpenNestedKey = null;
+                setTimeout(function () {
+                    const target = panel.querySelector('[data-open-subgrid-key="' + openKey + '"]');
+                    if (target && typeof target.click === 'function') target.click();
+                }, 0);
+            }
         }
 
         function mkBtn(label, handler) {
@@ -1131,7 +1232,12 @@
                             const ri = Number(parts[0]);
                             const colKey = parts[1];
                             if (!Number.isFinite(ri) || !isNonEmptyString(colKey)) return;
-                            pendingFocusKey = 'subgrid:' + ri + ':' + colKey;
+                            const colDef = colDefs.find(function (d) { return d && d.key === colKey; });
+                            const focusKey = 'subgrid:' + ri + ':' + colKey;
+                            pendingFocusKey = focusKey;
+                            if (colDef && colDef.type === 'json-array') {
+                                pendingOpenNestedKey = focusKey;
+                            }
                             renderGrid();
                         }
                     } : null
@@ -1229,6 +1335,7 @@
                 gridBtn.type = 'button';
                 gridBtn.textContent = 'Edit subgrid';
                 gridBtn.style.alignSelf = 'flex-start';
+                gridBtn.dataset.openSubgridKey = focusKey;
                 gridBtn.onclick = function () {
                     const parsed = Array.isArray(currentJsonArray) ? currentJsonArray : [];
                     if (!Array.isArray(parsed)) {
@@ -1347,7 +1454,12 @@
                             if (!Number.isFinite(ri) || !isNonEmptyString(colKey)) return;
                             state.filterText = '';
                             state.columnFilters = {};
-                            state.requestedFocusKey = 'cell:' + ri + ':' + colKey;
+                            const targetCol = (state.config.columns || []).find(function (c) { return c && c.key === colKey; });
+                            const focusKey = 'cell:' + ri + ':' + colKey;
+                            state.requestedFocusKey = focusKey;
+                            if (targetCol && targetCol.type === 'json-array') {
+                                state.requestedOpenMainSubgridKey = focusKey;
+                            }
                             render(state);
                         }
                     } : null
@@ -1625,8 +1737,18 @@
         const effectiveFocusState = isNonEmptyString(state.requestedFocusKey)
             ? { focusKey: state.requestedFocusKey, selectionStart: null, selectionEnd: null }
             : focusState;
+        const pendingOpenMainSubgridKey = isNonEmptyString(state.requestedOpenMainSubgridKey)
+            ? state.requestedOpenMainSubgridKey
+            : null;
         state.requestedFocusKey = null;
+        state.requestedOpenMainSubgridKey = null;
         restoreFocusState(mountEl, effectiveFocusState);
+        if (pendingOpenMainSubgridKey) {
+            setTimeout(function () {
+                const target = mountEl.querySelector('[data-open-subgrid-key="' + pendingOpenMainSubgridKey + '"]');
+                if (target && typeof target.click === 'function') target.click();
+            }, 0);
+        }
     }
 
     async function resolveRuntimeConfig(initConfig) {

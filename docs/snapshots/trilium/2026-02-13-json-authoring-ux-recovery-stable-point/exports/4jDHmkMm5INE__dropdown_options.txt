@@ -19,7 +19,7 @@
           "tags": [
             {
               "label": "stable",
-              "score": 10,
+              "score": "D",
               "category": "workflow"
             },
             {
@@ -49,7 +49,7 @@
   },
   {
     "domain": "publisher",
-    "id": "mozilla",
+    "id": "sdfdsa",
     "label": "Mozilla",
     "parentId": null,
     "sort": 20,
